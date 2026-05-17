@@ -1,108 +1,54 @@
-import { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-
+import { AppProvider, useApp } from './context/AppContext';
 import Sidebar from './components/layout/Sidebar';
 import TopBar from './components/layout/TopBar';
-import AnimatedBackground from './components/ui/AnimatedBackground';
+import ExecutiveDashboard from './pages/ExecutiveDashboard';
+import CompetitorWorkspace from './pages/CompetitorWorkspace';
+import MarketTrendsTerminal from './pages/MarketTrendsTerminal';
+import AISecStrategyEngine from './pages/AISecStrategyEngine';
+import AnalyticsLab from './pages/AnalyticsLab';
 import CommandPalette from './components/ui/CommandPalette';
 import NotificationPanel from './components/ui/NotificationPanel';
-import AIDock from './components/ui/AIDock';
+import AICopilot from './components/ui/AICopilot';
 
-import Dashboard from './pages/Dashboard';
-import CRMPipeline from './pages/CRMPipeline';
-import MarketIntelligence from './pages/MarketIntelligence';
-import Investor from './pages/Investor';
-import AnalyticsLab from './pages/AnalyticsLab';
-import AICommandCenter from './pages/AICommandCenter';
-
-const pageTitles: Record<string, string> = {
-  '/': 'Command Center',
-  '/crm': 'CRM Pipeline',
-  '/market': 'Market Intelligence',
-  '/investor': 'Investor Relations',
-  '/analytics': 'Analytics Lab',
-  '/ai-center': 'AI Command Center',
-};
-
-function AnimatedRoutes() {
-  const location = useLocation();
-  return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={location.pathname}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="h-full"
-      >
-        <Routes location={location}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/crm" element={<CRMPipeline />} />
-          <Route path="/market" element={<MarketIntelligence />} />
-          <Route path="/investor" element={<Investor />} />
-          <Route path="/analytics" element={<AnalyticsLab />} />
-          <Route path="/ai-center" element={<AICommandCenter />} />
-        </Routes>
-      </motion.div>
-    </AnimatePresence>
-  );
-}
-
-function AppShell() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const location = useLocation();
-
-  const pageTitle = pageTitles[location.pathname] || 'NeuralX';
-
-  // Global keyboard shortcut for command palette
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-      e.preventDefault();
-      setCommandPaletteOpen((prev) => !prev);
-    }
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+function AppContent() {
+  const { activePage } = useApp();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden animated-gradient-bg">
-      <AnimatedBackground />
-      <div className="neuralx-grid-bg fixed inset-0 pointer-events-none z-0" />
+    <div className="w-full h-full flex flex-col relative bg-bg-primary overflow-hidden">
+      {/* Visual Canvas Effects */}
+      <div className="absolute inset-0 grid-bg-overlay opacity-30 pointer-events-none z-0" />
+      <div className="absolute inset-0 radial-pulse-overlay pointer-events-none z-0" />
 
-      {/* Sidebar */}
-      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      {/* Main Top Header Ticker + Navigation */}
+      <TopBar />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden relative z-10">
-        <TopBar
-          onCommandPalette={() => setCommandPaletteOpen(true)}
-          onNotifications={() => setNotificationsOpen(true)}
-          pageTitle={pageTitle}
-        />
-        <main className="flex-1 overflow-hidden">
-          <AnimatedRoutes />
+      {/* Body Area */}
+      <div className="flex-1 flex overflow-hidden z-10">
+        {/* Left collapsible Sidebar */}
+        <Sidebar />
+
+        {/* Dynamic page content container */}
+        <main className="flex-1 min-w-0 h-full relative bg-black/10 backdrop-blur-sm">
+          {activePage === 'dashboard' && <ExecutiveDashboard />}
+          {activePage === 'competitors' && <CompetitorWorkspace />}
+          {activePage === 'trends' && <MarketTrendsTerminal />}
+          {activePage === 'strategy' && <AISecStrategyEngine />}
+          {activePage === 'lab' && <AnalyticsLab />}
         </main>
       </div>
 
-      {/* Global Overlays */}
-      <CommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
-      <NotificationPanel isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
-      <AIDock />
+      {/* Futuristic Floating Overlays */}
+      <CommandPalette />
+      <NotificationPanel />
+      <AICopilot />
     </div>
   );
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppShell />
-    </BrowserRouter>
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   );
 }

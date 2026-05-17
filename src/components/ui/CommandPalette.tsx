@@ -1,157 +1,181 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import {
-  Search, LayoutDashboard, Kanban, TrendingUp, Presentation,
-  FlaskConical, Brain, Plus, Download, Sparkles, Users, Settings, Moon, ArrowRight
-} from 'lucide-react';
-import { commandPaletteActions } from '../../data/mockData';
+import { Search, Compass, Shield, TrendingUp, Cpu, X, Brain } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
+import type { ActivePage } from '../../context/AppContext';
+import { competitors, marketTrends, strategicRecommendations } from '../../data/mockData';
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  LayoutDashboard, Kanban, TrendingUp, PresentationIcon: Presentation,
-  FlaskConical, Brain, Search, Plus, Download, Sparkles, Users, Settings, Moon,
-};
+export default function CommandPalette() {
+  const {
+    commandPaletteOpen,
+    setCommandPaletteOpen,
+    setActivePage,
+    setSelectedCompetitorId
+  } = useApp();
 
-interface CommandPaletteProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
 
-  const filtered = commandPaletteActions.filter(
-    (a) => a.label.toLowerCase().includes(query.toLowerCase()) || a.category.toLowerCase().includes(query.toLowerCase())
-  );
-
-  const grouped = filtered.reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = [];
-    acc[item.category].push(item);
-    return acc;
-  }, {} as Record<string, typeof commandPaletteActions>);
-
+  // Keyboard shortcut listener
   useEffect(() => {
-    if (isOpen) {
-      setQuery('');
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        if (isOpen) onClose();
-        else onClose(); // toggle handled in parent
+        setCommandPaletteOpen(!commandPaletteOpen);
+      } else if (e.key === 'Escape') {
+        setCommandPaletteOpen(false);
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [isOpen, onClose]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [commandPaletteOpen, setCommandPaletteOpen]);
 
-  const handleSelect = (action: typeof commandPaletteActions[0]) => {
-    if (action.id.startsWith('nav-')) {
-      const routes: Record<string, string> = {
-        'nav-dashboard': '/',
-        'nav-crm': '/crm',
-        'nav-market': '/market',
-        'nav-investor': '/investor',
-        'nav-analytics': '/analytics',
-        'nav-ai': '/ai-center',
-      };
-      navigate(routes[action.id] || '/');
+  // Focus input when opened
+  useEffect(() => {
+    if (commandPaletteOpen) {
+      setTimeout(() => inputRef.current?.focus(), 80);
+    } else {
+      setQuery('');
     }
-    onClose();
-  };
+  }, [commandPaletteOpen]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex((i) => Math.min(i + 1, filtered.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter' && filtered[selectedIndex]) {
-      handleSelect(filtered[selectedIndex]);
-    } else if (e.key === 'Escape') {
-      onClose();
-    }
-  };
+  if (!commandPaletteOpen) return null;
+
+  // Filter items based on query
+  const navigationItems = [
+    { label: 'Go to Executive Dashboard', page: 'dashboard' as ActivePage, category: 'Navigation', icon: Compass },
+    { label: 'Go to Competitor Workspace', page: 'competitors' as ActivePage, category: 'Navigation', icon: Shield },
+    { label: 'Go to Market Trends Terminal', page: 'trends' as ActivePage, category: 'Navigation', icon: TrendingUp },
+    { label: 'Go to AI Strategy Engine', page: 'strategy' as ActivePage, category: 'Navigation', icon: Brain },
+    { label: 'Go to Analytics Lab', page: 'lab' as ActivePage, category: 'Navigation', icon: Cpu }
+  ].filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
+
+  const competitorItems = competitors
+    .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
+    .map((c) => ({
+      label: `Analyze competitor: ${c.name} (${c.marketShare}% Share)`,
+      action: () => {
+        setSelectedCompetitorId(c.id);
+        setActivePage('competitors');
+        setCommandPaletteOpen(false);
+      },
+      category: 'Competitors',
+      icon: Shield
+    }));
+
+  const trendItems = marketTrends
+    .filter((t) => t.sector.toLowerCase().includes(query.toLowerCase()))
+    .map((t) => ({
+      label: `Inspect trend: ${t.sector} (${t.growthRate}% YoY Growth)`,
+      action: () => {
+        setActivePage('trends');
+        setCommandPaletteOpen(false);
+      },
+      category: 'Trends',
+      icon: TrendingUp
+    }));
+
+  const recommendationItems = strategicRecommendations
+    .filter((r) => r.title.toLowerCase().includes(query.toLowerCase()))
+    .map((r) => ({
+      label: `View intelligence recommendation: ${r.title}`,
+      action: () => {
+        setActivePage('strategy');
+        setCommandPaletteOpen(false);
+      },
+      category: 'AI Strategy',
+      icon: Brain
+    }));
+
+  const allFiltered = [
+    ...navigationItems.map((item) => ({
+      label: item.label,
+      action: () => {
+        setActivePage(item.page);
+        setCommandPaletteOpen(false);
+      },
+      category: item.category,
+      icon: item.icon
+    })),
+    ...competitorItems,
+    ...trendItems,
+    ...recommendationItems
+  ];
 
   return (
     <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-[15%] left-1/2 -translate-x-1/2 w-[560px] max-w-[90vw] bg-bg-elevated/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl shadow-2xl z-[101] overflow-hidden"
-          >
-            {/* Search Input */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
-              <Search className="w-4 h-4 text-text-muted shrink-0" />
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
-                onKeyDown={handleKeyDown}
-                placeholder="Type a command or search..."
-                className="flex-1 bg-transparent text-sm text-text-primary placeholder-text-muted outline-none"
-              />
-              <kbd className="text-[10px] text-text-muted bg-white/[0.06] rounded px-1.5 py-0.5 font-mono">ESC</kbd>
-            </div>
+      <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.96, y: -10 }}
+          transition={{ duration: 0.15 }}
+          className="w-full max-w-2xl bg-bg-surface border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden glow-cyan"
+        >
+          {/* Header query bar */}
+          <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.06]">
+            <Search className="w-5 h-5 text-text-secondary" />
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search workspaces, competitors, market trends, or AI suggestions..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="flex-1 bg-transparent text-sm text-text-primary outline-none placeholder-text-muted"
+            />
+            <kbd className="text-[10px] text-text-muted bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.06] font-mono">
+              ESC
+            </kbd>
+            <button
+              onClick={() => setCommandPaletteOpen(false)}
+              className="text-text-muted hover:text-text-primary transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-            {/* Results */}
-            <div className="max-h-[360px] overflow-y-auto py-2">
-              {Object.entries(grouped).map(([category, items]) => (
-                <div key={category}>
-                  <div className="px-4 py-1.5">
-                    <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">{category}</span>
+          {/* Results list */}
+          <div className="max-h-96 overflow-y-auto p-2 space-y-2">
+            {allFiltered.length > 0 ? (
+              Object.entries(
+                allFiltered.reduce((acc, item) => {
+                  if (!acc[item.category]) acc[item.category] = [];
+                  acc[item.category].push(item);
+                  return acc;
+                }, {} as Record<string, typeof allFiltered>)
+              ).map(([category, items]) => (
+                <div key={category} className="space-y-1">
+                  <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                    {category}
                   </div>
-                  {items.map((action) => {
-                    const Icon = iconMap[action.icon] || ArrowRight;
-                    const globalIndex = filtered.indexOf(action);
+                  {items.map((item, index) => {
+                    const IconComponent = item.icon;
                     return (
                       <button
-                        key={action.id}
-                        onClick={() => handleSelect(action)}
-                        onMouseEnter={() => setSelectedIndex(globalIndex)}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                          globalIndex === selectedIndex
-                            ? 'bg-accent-cyan/10 text-accent-cyan'
-                            : 'text-text-secondary hover:bg-white/[0.03]'
-                        }`}
+                        key={index}
+                        onClick={item.action}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-white/[0.03] transition-all group"
                       >
-                        <Icon className="w-4 h-4 shrink-0" />
-                        <span className="text-sm flex-1">{action.label}</span>
-                        {action.shortcut && (
-                          <span className="text-[10px] text-text-muted font-mono">{action.shortcut}</span>
-                        )}
+                        <div className="w-6 h-6 rounded-lg bg-white/[0.04] group-hover:bg-accent-cyan/10 flex items-center justify-center transition-colors">
+                          <IconComponent className="w-3.5 h-3.5 text-text-secondary group-hover:text-accent-cyan transition-colors" />
+                        </div>
+                        <span className="flex-1 truncate">{item.label}</span>
+                        <kbd className="hidden group-hover:inline-block text-[9px] text-text-muted bg-white/[0.06] px-1 rounded font-mono">
+                          Enter
+                        </kbd>
                       </button>
                     );
                   })}
                 </div>
-              ))}
-              {filtered.length === 0 && (
-                <div className="px-4 py-8 text-center text-sm text-text-muted">No results found</div>
-              )}
-            </div>
-          </motion.div>
-        </>
-      )}
+              ))
+            ) : (
+              <div className="py-12 text-center text-xs text-text-muted">
+                No intelligence metrics found for "{query}"
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
     </AnimatePresence>
   );
 }
