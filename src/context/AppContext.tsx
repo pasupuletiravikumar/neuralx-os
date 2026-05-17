@@ -22,6 +22,8 @@ interface AppContextType {
   setCopilotOpen: (open: boolean) => void;
   notificationsOpen: boolean;
   setNotificationsOpen: (open: boolean) => void;
+  diagnosticsOpen: boolean;
+  setDiagnosticsOpen: (open: boolean) => void;
   alerts: typeof systemAlerts;
   setAlerts: React.Dispatch<React.SetStateAction<typeof systemAlerts>>;
   chatHistory: ChatMessage[];
@@ -42,6 +44,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [alerts, setAlerts] = useState(systemAlerts);
   const [selectedCompetitorId, setSelectedCompetitorId] = useState<string | null>(competitors[0].id);
   const [activeRecommendations, setActiveRecommendations] = useState<StrategicRecommendation[]>(strategicRecommendations);
@@ -111,6 +114,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setCopilotOpen,
         notificationsOpen,
         setNotificationsOpen,
+        diagnosticsOpen,
+        setDiagnosticsOpen,
         alerts,
         setAlerts,
         chatHistory,

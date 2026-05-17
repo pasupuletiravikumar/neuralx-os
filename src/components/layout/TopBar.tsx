@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { tickerFeed } from '../../data/mockData';
 
 export default function TopBar() {
-  const { setCommandPaletteOpen, setNotificationsOpen, setCopilotOpen, alerts } = useApp();
+  const { setCommandPaletteOpen, setNotificationsOpen, setCopilotOpen, setDiagnosticsOpen, alerts } = useApp();
   const unreadAlertsCount = alerts.filter((a) => a.status === 'new').length;
 
   return (
@@ -91,6 +91,7 @@ export default function TopBar() {
 
           {/* Metrics ticker toggle link */}
           <button
+            onClick={() => setDiagnosticsOpen(true)}
             className="w-8 h-8 rounded-xl bg-white/[0.03] border border-white/[0.06] text-text-secondary hover:text-accent-emerald hover:bg-white/[0.04] flex items-center justify-center transition-all"
             title="Diagnostics"
           >

@@ -9,6 +9,7 @@ import AnalyticsLab from './pages/AnalyticsLab';
 import CommandPalette from './components/ui/CommandPalette';
 import NotificationPanel from './components/ui/NotificationPanel';
 import AICopilot from './components/ui/AICopilot';
+import DiagnosticsPanel from './components/ui/DiagnosticsPanel';
 
 function AppContent() {
   const { activePage } = useApp();
@@ -41,6 +42,7 @@ function AppContent() {
       <CommandPalette />
       <NotificationPanel />
       <AICopilot />
+      <DiagnosticsPanel />
     </div>
   );
 }
