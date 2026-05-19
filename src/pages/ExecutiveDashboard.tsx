@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Compass,
   TrendingUp,
@@ -8,7 +9,9 @@ import {
   ArrowDownRight,
   Sparkles,
   Zap,
-  Globe
+  Globe,
+  Download,
+  RefreshCw
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { competitors, marketTrends } from '../data/mockData';
@@ -25,6 +28,10 @@ import {
 
 export default function ExecutiveDashboard() {
   const { setActivePage, setSelectedCompetitorId, setCopilotOpen } = useApp();
+
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [showScanModal, setShowScanModal] = useState(false);
 
   const totalMarketSize = marketTrends.reduce((acc, curr) => acc + curr.marketSize, 0).toFixed(1);
   const avgSentiment = Math.round(
@@ -51,6 +58,63 @@ export default function ExecutiveDashboard() {
     revenue: c.revenue
   }));
 
+  // Trigger high-fidelity diagnostic opportunity scanning animation
+  const triggerOpportunityScan = () => {
+    setIsScanning(true);
+    setScanProgress(0);
+    setShowScanModal(true);
+
+    const interval = setInterval(() => {
+      setScanProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsScanning(false);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 120);
+  };
+
+  // Strategic report generation and dynamic file downloader
+  const handleExportReport = () => {
+    const reportText = `============================================================
+MARKETPULSE AI — ENTERPRISE STRATEGIC BRIEFING REPORT
+Generated: ${new Date().toLocaleDateString()} | Node: MP-NODE-5174-SEC
+============================================================
+
+[I] EXECUTIVE MARKET OVERVIEW
+* Total Sector Market Size: $${totalMarketSize} Billion
+* Avg Competitor Sentiment Score: ${avgSentiment}% Positive
+* Sector CAGR Index Pace: 22.8% YoY
+* Primary Market Leader: ${topCompetitor.name} (${topCompetitor.marketShare}% Share)
+
+[II] COMPETITIVE MARKET INDEXES
+${competitors.map((c, i) => `${i+1}. ${c.name}
+   - Revenue Capture: $${c.revenue}M
+   - Segment Target: ${c.targetAudience}
+   - Acquisition Buying viability index: ${c.acquisitionProbability}%`).join('\n')}
+
+[III] REGIONAL INTEL FORECASTS
+${marketTrends.map((t) => `- ${t.sector} (MP Symbol: ${t.tickerSymbol})
+   - Size: $${t.marketSize}B | Sentiment Index: ${t.sentimentScore}/100
+   - Regional YoY growth vectors: NA (+${t.regionalGrowth.na}%), EU (+${t.regionalGrowth.eu}%), APAC (+${t.regionalGrowth.apac}%)`).join('\n')}
+
+============================================================
+AI PLATFORM FORECAST ADVISORY
+Generative AI analysis highlights strong buyability opportunities for Domo Inc (+${competitors[4].acquisitionProbability}% buyout probability) to instantly capture their 1000+ local data stream pipelines. Fast-track regional EdTech node scaling.
+============================================================`;
+
+    const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `MarketPulse_Strategic_Briefing_Report_${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <motion.div
       variants={stagger}
@@ -72,12 +136,22 @@ export default function ExecutiveDashboard() {
             Real-time market analytics, competitive positioning indicators, and AI forecasts.
           </p>
         </div>
-        <button
-          onClick={() => setCopilotOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-br from-accent-cyan to-accent-violet hover:from-accent-cyan/95 hover:to-accent-violet/95 text-white font-bold text-xs flex items-center gap-2 glow-cyan transition-all shadow-md"
-        >
-          <Sparkles className="w-3.5 h-3.5" /> Ask AI Intelligence Core
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={handleExportReport}
+            className="px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] text-text-secondary hover:text-text-primary font-bold text-xs flex items-center gap-2 transition-all shadow-sm"
+            title="Download formatted Strategic Intelligence briefing report"
+          >
+            <Download className="w-3.5 h-3.5" /> Export Strategic Report
+          </button>
+          <button
+            onClick={triggerOpportunityScan}
+            className="px-3.5 py-2.5 rounded-xl bg-gradient-to-br from-accent-cyan to-accent-violet hover:from-accent-cyan/95 hover:to-accent-violet/95 text-white font-bold text-xs flex items-center gap-2 glow-cyan transition-all shadow-md animate-pulse"
+            title="Scan database parameters to discover high-yield opportunities"
+          >
+            <Sparkles className="w-3.5 h-3.5" /> Detect Opportunities
+          </button>
+        </div>
       </motion.div>
 
       {/* KPI Cards Grid */}
@@ -299,6 +373,122 @@ export default function ExecutiveDashboard() {
           </div>
         </GlassCard>
       </motion.div>
+
+      {/* Opportunity Scanner Diagnostic Modal Overlay */}
+      <AnimatePresence>
+        {showScanModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-lg bg-bg-surface border border-white/[0.08] rounded-2xl shadow-2xl p-6 relative overflow-hidden select-none"
+            >
+              {/* Background scanning visual sweeps */}
+              {isScanning && (
+                <div className="absolute inset-0 bg-gradient-to-r from-accent-cyan/5 via-transparent to-accent-violet/5 animate-pulse pointer-events-none" />
+              )}
+
+              {/* Close Button */}
+              <button
+                onClick={() => setShowScanModal(false)}
+                className="absolute top-4 right-4 text-text-muted hover:text-text-primary text-lg font-bold w-7 h-7 rounded-lg bg-white/[0.02] border border-white/[0.06] flex items-center justify-center transition-all"
+                disabled={isScanning}
+              >
+                ✕
+              </button>
+
+              <div className="flex items-center gap-3 border-b border-white/[0.06] pb-4 mb-5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center text-white glow-cyan">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-text-primary">
+                    AI Opportunity Detector Scan
+                  </h3>
+                  <p className="text-[10px] text-text-muted mt-0.5 font-mono">
+                    Node Vector: MP-NODE-5174-SEC
+                  </p>
+                </div>
+              </div>
+
+              {isScanning ? (
+                <div className="py-6 text-center space-y-4">
+                  <RefreshCw className="w-8 h-8 text-accent-cyan animate-spin mx-auto mb-2 glow-cyan" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary block">
+                    Scanning Database Pipelines...
+                  </span>
+                  
+                  {/* Progress Bar */}
+                  <div className="w-full max-w-xs mx-auto h-1.5 bg-white/[0.04] rounded-full overflow-hidden border border-white/[0.06]">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-accent-cyan to-accent-violet transition-all duration-150"
+                      style={{ width: `${scanProgress}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono text-text-muted block">
+                    Analyzing SWOT matrix vectors... {scanProgress}%
+                  </span>
+                </div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-4 py-2"
+                >
+                  <div className="p-4 bg-accent-emerald/5 border border-accent-emerald/20 rounded-xl flex items-start gap-3.5">
+                    <Zap className="w-5 h-5 text-accent-emerald shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-accent-emerald block font-mono">
+                        [SUCCESS] HIGH-YIELD OPPORTUNITY DISCOVERED
+                      </span>
+                      <h4 className="text-xs font-bold text-text-primary mt-2">
+                        Domo Inc Buyout & Channel Integration Playbook
+                      </h4>
+                      <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
+                        Domo Inc presents an optimal acquisition score of **60%** due to its stagnating growth rate (+8.4% CAGR) and highly valuable datastore libraries. Fast-tracking integration yields a projected **+$4.8M** ARR margin contribution in NA and Europe.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-center">
+                    <div className="p-3 bg-white/[0.01] border border-white/[0.04] rounded-xl">
+                      <span className="text-[8px] font-bold text-text-secondary uppercase">Buyout Viability</span>
+                      <h5 className="text-sm font-extrabold text-accent-cyan mt-1">High (60%)</h5>
+                    </div>
+                    <div className="p-3 bg-white/[0.01] border border-white/[0.04] rounded-xl">
+                      <span className="text-[8px] font-bold text-text-secondary uppercase">Projected Yield</span>
+                      <h5 className="text-sm font-extrabold text-accent-emerald mt-1">+$4.8M ARR</h5>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2.5 mt-5">
+                    <button
+                      onClick={() => {
+                        setShowScanModal(false);
+                        setSelectedCompetitorId('comp5'); // Select Domo
+                        setActivePage('competitors');
+                      }}
+                      className="flex-1 py-2.5 rounded-xl border border-white/[0.08] hover:bg-white/[0.04] text-text-primary text-xs font-bold uppercase tracking-wider transition-all"
+                    >
+                      Inspect Domo SWOT
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowScanModal(false);
+                        setCopilotOpen(true);
+                      }}
+                      className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-violet hover:from-accent-cyan/90 hover:to-accent-violet/90 text-white text-xs font-bold uppercase tracking-wider glow-cyan transition-all shadow-md"
+                    >
+                      Draft Strategic Brief
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

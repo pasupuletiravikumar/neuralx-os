@@ -24,6 +24,7 @@ import {
 
 export default function MarketTrendsTerminal() {
   const [selectedTrendIdx, setSelectedTrendIdx] = useState(0);
+  const [selectedRegion, setSelectedRegion] = useState<'na' | 'eu' | 'apac' | 'latam'>('apac');
   const activeTrend = marketTrends[selectedTrendIdx];
 
   const stagger = {
@@ -224,35 +225,86 @@ export default function MarketTrendsTerminal() {
           <GlassCard hover={false} className="flex flex-col justify-between">
             <div className="flex items-center justify-between pb-4 border-b border-white/[0.04]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
-                Sector Core Metrics
+                Sector Core Metrics & Regions
               </span>
               <span className="text-[9px] font-mono text-accent-emerald font-bold">
                 SCORE: {activeTrend.sentimentScore}/100
               </span>
             </div>
 
-            <div className="mt-4 space-y-3.5 flex-1 justify-center flex flex-col">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-text-secondary">Market Size</span>
-                <span className="font-bold text-text-primary">${activeTrend.marketSize} Billion</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-text-secondary">Growth Rate Pace</span>
-                <span className="font-bold text-accent-emerald">+{activeTrend.growthRate}% YoY</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-text-secondary">Customer Sentiment</span>
-                <span className="font-bold text-text-primary">{activeTrend.sentimentScore}% Positive</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-text-secondary">APAC Momentum</span>
-                <span className="font-bold text-accent-cyan">+{activeTrend.regionalGrowth.apac}% Growth</span>
-              </div>
+            {/* Clickable Regional Tab Pill Selector */}
+            <div className="mt-4 flex gap-1.5 overflow-x-auto pb-1 border-b border-white/[0.03]">
+              {[
+                { key: 'na' as const, label: 'NA' },
+                { key: 'eu' as const, label: 'EU' },
+                { key: 'apac' as const, label: 'APAC' },
+                { key: 'latam' as const, label: 'LATAM' }
+              ].map((reg) => (
+                <button
+                  key={reg.key}
+                  onClick={() => setSelectedRegion(reg.key)}
+                  className={`px-2.5 py-1 text-[9px] font-extrabold uppercase rounded-lg border transition-all ${
+                    selectedRegion === reg.key
+                      ? 'border-accent-emerald/30 bg-accent-emerald/5 text-accent-emerald font-black shadow-sm'
+                      : 'border-transparent text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  {reg.label}
+                </button>
+              ))}
             </div>
 
-            <div className="mt-4 p-2 bg-white/[0.01] border border-white/[0.04] rounded-xl text-center text-[10px] text-text-secondary leading-relaxed">
-              APAC regional vectors indicate high Generative AI momentum. Suggest planning early cloud warehouse distribution allocation.
-            </div>
+            {(() => {
+              let regionName = 'Asia-Pacific (APAC)';
+              let growth = activeTrend.regionalGrowth.apac;
+              let highlightColor = 'text-accent-cyan';
+              let strategyText = `${activeTrend.sector} pacing at +${growth}% CAGR in APAC driven by rapid mobile intelligence and EdTech analytics adoption. Recommend fast-tracking early local cloud warehouse distribution node allocations.`;
+
+              if (selectedRegion === 'na') {
+                regionName = 'North America (NA)';
+                growth = activeTrend.regionalGrowth.na;
+                highlightColor = 'text-accent-cyan';
+                strategyText = `${activeTrend.sector} pacing at +${growth}% CAGR in North America. Rapid enterprise cloud contract sizing by Palantir and Looker highlights high mid-market demands. Suggest deploying Generative SQL pipelines.`;
+              } else if (selectedRegion === 'eu') {
+                regionName = 'Europe (EU)';
+                growth = activeTrend.regionalGrowth.eu;
+                highlightColor = 'text-accent-violet';
+                strategyText = `${activeTrend.sector} pacing at +${growth}% CAGR in Europe. Heavy regulatory compliance demands require isolated federated querying nodes to safely satisfy strict GDPR and localized server storage rules.`;
+              } else if (selectedRegion === 'latam') {
+                regionName = 'Latin America (LATAM)';
+                growth = activeTrend.regionalGrowth.latam;
+                highlightColor = 'text-accent-rose';
+                strategyText = `${activeTrend.sector} pacing at +${growth}% CAGR in Latin America. Emerging fintech analytics hubs are accelerating. Excellent vector for a low-cost, lightweight cloud connector model subscription.`;
+              }
+
+              return (
+                <>
+                  <div className="mt-4 space-y-3.5 flex-1 justify-center flex flex-col">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-text-secondary">Market Size</span>
+                      <span className="font-bold text-text-primary">${activeTrend.marketSize} Billion</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-text-secondary">Growth Rate Pace</span>
+                      <span className="font-bold text-accent-emerald">+{activeTrend.growthRate}% YoY</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-text-secondary">Customer Sentiment</span>
+                      <span className="font-bold text-text-primary">{activeTrend.sentimentScore}% Positive</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-text-secondary">Active Regional Growth</span>
+                      <span className={`font-bold ${highlightColor}`}>+{growth}% ({regionName})</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-2 bg-white/[0.01] border border-white/[0.04] rounded-xl text-[10px] text-text-secondary leading-relaxed">
+                    <span className={`font-bold uppercase ${highlightColor} block mb-1 text-[8px] tracking-wider`}>Regional Strategy Playbook</span>
+                    {strategyText}
+                  </div>
+                </>
+              );
+            })()}
           </GlassCard>
         </motion.div>
       </div>
